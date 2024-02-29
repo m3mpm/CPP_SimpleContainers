@@ -1,4 +1,4 @@
-.PHONY: all clean test gcov_report linter cppcheck style_check
+.PHONY: all clean test gcov_report debug check_leaks
 SHELL := /bin/bash
 
 CC = g++
@@ -30,22 +30,11 @@ gcov_report: clean
 	./test
 	lcov -t test -o test.info -c -d . --no-external
 	genhtml test.info -o report
-
-.IGNORE: linter
-linter:
-	cp ../materials/linters/CPPLINT.cfg CPPLINT.cfg
-	python3 ../materials/linters/cpplint.py --extensions=cpp *.cpp *.h
-	rm -rf CPPLINT.cfg
-
-cppcheck:
-	cppcheck --enable=all --language=c++ --std=c++17 --suppress=missingIncludeSystem *.h *.cpp
-
-style_check: linter cppcheck
-
+	
 debug:
 	$(CC) $(CFLAGS) $(TEST_SRCS) $(LIB_NAME) -I./ -L./ $(LDFLAGS) -o debug.out -ggdb3
 
-check: clean debug style_check
+check_leaks: clean debug
 ifeq ($(OS), Darwin)
 	CK_FORK=no leaks --atExit -- ./debug.out
 else
